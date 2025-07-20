@@ -1,0 +1,23 @@
+{
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next",
+      "config": {
+        "installCommand": "pnpm install --no-frozen-lockfile",
+        "eslint": {
+          "ignoreDuringBuilds": true
+        },
+        "typescript": {
+          "ignoreBuildErrors": true
+        }
+      }
+    }
+  ],
+  "env": {
+    "RUNTIME": "nodejs",
+    "NEXT_PUBLIC_CONTACT_LINK": "https://t.me/qynon",
+    "NEXT_PUBLIC_REPO_LINK": "https://github.com/ChQynon/samga.git",
+    "NEXT_PUBLIC_DONATE_LINK": "https://tinkoff.ru/rm/kinanin.deni.1/n0mzN27456"
+  }
+} 

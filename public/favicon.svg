@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <!-- Определения градиентов и фильтров -->
+  <defs>
+    <!-- Градиент для основного ромба -->
+    <linearGradient id="diamond-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="10%" stop-color="#1e6091" />
+      <stop offset="90%" stop-color="#3498db" />
+    </linearGradient>
+    
+    <!-- Градиент для верхней грани 3D-эффекта -->
+    <linearGradient id="top-face" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3498db" />
+      <stop offset="100%" stop-color="#2980b9" />
+    </linearGradient>
+    
+    <!-- Градиент для боковой грани 3D-эффекта -->
+    <linearGradient id="side-face" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2980b9" />
+      <stop offset="100%" stop-color="#1e6091" />
+    </linearGradient>
+    
+    <!-- Тень для 3D-эффекта -->
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0.5" dy="1" stdDeviation="1" flood-color="rgba(0,0,0,0.35)" flood-opacity="0.5" />
+    </filter>
+    
+    <!-- Внутренняя тень для прямоугольника -->
+    <filter id="inner-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feOffset dx="0.5" dy="0.5" />
+      <feGaussianBlur stdDeviation="0.5" result="offset-blur" />
+      <feComposite operator="out" in="SourceGraphic" in2="offset-blur" result="inverse" />
+      <feFlood flood-color="rgba(0,0,0,0.2)" flood-opacity="1" result="color" />
+      <feComposite operator="in" in="color" in2="inverse" result="shadow" />
+      <feComposite operator="over" in="shadow" in2="SourceGraphic" />
+    </filter>
+  </defs>
+  
+  <!-- Главный ромб с 3D-эффектом -->
+  <g filter="url(#shadow)">
+    <!-- Основной ромб -->
+    <polygon points="16,3 29,16 16,29 3,16" fill="url(#diamond-gradient)" />
+    
+    <!-- Верхняя грань для 3D-эффекта -->
+    <polygon points="16,3 29,16 16,16 3,16" fill="url(#top-face)" opacity="0.8" />
+    
+    <!-- Боковая грань для 3D-эффекта -->
+    <polygon points="29,16 16,29 16,16" fill="url(#side-face)" opacity="0.6" />
+  </g>
+  
+  <!-- Прямоугольник внутри ромба с внутренней тенью -->
+  <rect x="10" y="10" width="12" height="12" rx="2" ry="2" fill="white" filter="url(#inner-shadow)" />
+</svg>

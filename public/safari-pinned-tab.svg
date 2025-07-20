@@ -1,0 +1,19 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN"
+ "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg version="1.0" xmlns="http://www.w3.org/2000/svg"
+ width="700pt" height="700pt" viewBox="0 0 700 700"
+ preserveAspectRatio="xMidYMid meet">
+<metadata>
+Created by qynon
+</metadata>
+<g transform="translate(0.000000,700.000000) scale(0.100000,-0.100000)"
+fill="#000000" stroke="none">
+  <!-- Основной ромб -->
+  <path d="M3500 6300 l-1750 -1750 1750 -1750 1750 -1750 1750 1750 1750 1750 -1750 1750 -1750 1750 -1750 -1750z m2000 -1750 l0 -1250 -1250 0 -1250 0 0 1250 0 1250 1250 0 1250 0 0 -1250z"/>
+  <!-- 3D эффект - верхняя грань -->
+  <path d="M3500 6300 l-1750 -1750 1750 0 1750 0 1750 1750 -1750 0 -1750 0z" fill="#000000" fill-opacity="0.2"/>
+  <!-- 3D эффект - боковая грань -->
+  <path d="M5250 4550 l1750 -1750 0 1750 -1750 0z" fill="#000000" fill-opacity="0.1"/>
+</g>
+</svg>
