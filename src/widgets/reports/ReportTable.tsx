@@ -119,6 +119,7 @@ const ReportTable: FC<{ reportCard?: ReportCard[number] }> = ({
       const container = document.createElement('div');
       container.style.padding = '15px';
       container.style.fontFamily = 'Arial, sans-serif';
+      container.style.color = 'black'; // Явно задаем черный цвет текста
       
       // Создаем заголовок
       const header = document.createElement('div');
@@ -209,6 +210,7 @@ const ReportTable: FC<{ reportCard?: ReportCard[number] }> = ({
           td.textContent = text;
           td.style.padding = '8px';
           td.style.border = '1px solid #ddd';
+          td.style.color = 'black'; // Явно задаем черный цвет текста
           
           // Выравнивание текста
           if (cellIndex === 0) {
