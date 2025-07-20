@@ -114,208 +114,221 @@ const ReportTable: FC<{ reportCard?: ReportCard[number] }> = ({
     try {
       setLoadingPDF(true);
       
-      // Используем базовый HTML для надежности
-      const tableHTML = document.createElement('div');
+      // Используем простой подход для мобильных устройств
+      // Создаем таблицу напрямую через DOM API для большей совместимости
+      const container = document.createElement('div');
+      container.style.padding = '15px';
+      container.style.fontFamily = 'Arial, sans-serif';
       
-      // SVG логотип напрямую (из favicon)
-      const logoSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" style="margin-right:10px">
-        <defs>
-          <linearGradient id="diamond-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="10%" stop-color="#1e6091" />
-            <stop offset="90%" stop-color="#3498db" />
-          </linearGradient>
-          <linearGradient id="top-face" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="#3498db" />
-            <stop offset="100%" stop-color="#2980b9" />
-          </linearGradient>
-          <linearGradient id="side-face" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#2980b9" />
-            <stop offset="100%" stop-color="#1e6091" />
-          </linearGradient>
-        </defs>
-        <g>
-          <polygon points="16,3 29,16 16,29 3,16" fill="url(#diamond-gradient)" />
-          <polygon points="16,3 29,16 16,16 3,16" fill="url(#top-face)" opacity="0.8" />
-          <polygon points="29,16 16,29 16,16" fill="url(#side-face)" opacity="0.6" />
-        </g>
-        <rect x="10" y="10" width="12" height="12" rx="2" ry="2" fill="white" />
-      </svg>`;
+      // Создаем заголовок
+      const header = document.createElement('div');
+      header.style.backgroundColor = '#6AA9DF';
+      header.style.color = 'white';
+      header.style.padding = '15px';
+      header.style.marginBottom = '15px';
+      header.style.borderRadius = '5px 5px 0 0';
       
-      tableHTML.innerHTML = `
-        <html>
-          <head>
-            <style>
-              @media print {
-                body { margin: 0; padding: 15px; }
-                table { page-break-inside: avoid; }
-              }
-              body { 
-                font-family: Arial, sans-serif;
-                font-size: 12px;
-                line-height: 1.4;
-              }
-              .header {
-                background-color: #6AA9DF;
-                color: white;
-                padding: 15px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                border-radius: 5px 5px 0 0;
-                margin-bottom: 20px;
-              }
-              .header-left {
-                display: flex;
-                align-items: center;
-              }
-              h1 {
-                margin: 0;
-                font-size: 24px;
-              }
-              table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-bottom: 15px;
-              }
-              th {
-                background-color: #6AA9DF;
-                color: white;
-                font-weight: bold;
-                padding: 8px;
-                text-align: center;
-                border: 1px solid #4A89C0;
-              }
-              td {
-                padding: 8px;
-                border: 1px solid #ddd;
-                text-align: center;
-              }
-              td:first-child {
-                text-align: left;
-                padding-left: 10px;
-              }
-              tr:nth-child(even) {
-                background-color: #F2F9FF;
-              }
-              .footer-row {
-                background-color: #6AA9DF;
-                color: white;
-                font-weight: bold;
-              }
-              .footer-row td {
-                border: 1px solid #4A89C0;
-              }
-              .footer-row td:first-child {
-                text-align: left;
-              }
-              .signature {
-                margin-top: 20px;
-                margin-bottom: 20px;
-                color: #6AA9DF;
-                font-style: italic;
-                text-align: right;
-                clear: both;
-                position: relative;
-                padding-right: 10px;
-              }
-              .info {
-                margin-bottom: 15px;
-                color: #444;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <div class="header-left">
-                ${logoSvg}
-                <h1>Табель успеваемости</h1>
-              </div>
-            </div>
-            
-            <div class="info">
-              <p><strong>Учебный год:</strong> ${reportCard.schoolYear.name.ru}</p>
-              <p><strong>Система GPA:</strong> ${gpaSystem}-балльная</p>
-            </div>
-            
-            <table>
-              <thead>
-                <tr>
-                  <th>Предмет</th>
-                  <th>I</th>
-                  <th>II</th>
-                  <th>III</th>
-                  <th>IV</th>
-                  <th>Год</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${reportCard.reportCard.map(report => `
-                  <tr>
-                    <td>${report.subject.name.ru}</td>
-                    <td>${report.firstPeriod?.ru || "-"}</td>
-                    <td>${report.secondPeriod?.ru || "-"}</td>
-                    <td>${report.thirdPeriod?.ru || "-"}</td>
-                    <td>${report.fourthPeriod?.ru || "-"}</td>
-                    <td>${report.yearMark?.ru || "-"}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-              <tfoot>
-                <tr class="footer-row">
-                  <td>Итог. GPA</td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
-                  <td>${calculatedGPA.toFixed(2)}</td>
-                </tr>
-              </tfoot>
-            </table>
-            
-            <div class="signature">Сделано с сайта samga.top</div>
-          </body>
-        </html>
-      `;
+      // Создаем заголовок с текстом
+      const title = document.createElement('h1');
+      title.textContent = 'Табель успеваемости';
+      title.style.margin = '0';
+      title.style.fontSize = '20px';
+      header.appendChild(title);
+      
+      // Добавляем заголовок в контейнер
+      container.appendChild(header);
+      
+      // Добавляем информацию об учебном годе
+      const infoBlock = document.createElement('div');
+      infoBlock.style.marginBottom = '15px';
+      
+      const yearInfo = document.createElement('p');
+      yearInfo.style.margin = '5px 0';
+      yearInfo.innerHTML = `<strong>Учебный год:</strong> ${reportCard.schoolYear.name.ru}`;
+      
+      const gpaSystemInfo = document.createElement('p');
+      gpaSystemInfo.style.margin = '5px 0';
+      gpaSystemInfo.innerHTML = `<strong>Система GPA:</strong> ${gpaSystem}-балльная`;
+      
+      infoBlock.appendChild(yearInfo);
+      infoBlock.appendChild(gpaSystemInfo);
+      container.appendChild(infoBlock);
+      
+      // Создаем таблицу
+      const table = document.createElement('table');
+      table.style.width = '100%';
+      table.style.borderCollapse = 'collapse';
+      table.style.marginBottom = '15px';
+      table.setAttribute('cellspacing', '0');
+      table.setAttribute('cellpadding', '0');
+      
+      // Создаем заголовок таблицы
+      const thead = document.createElement('thead');
+      const headerRow = document.createElement('tr');
+      
+      const headers = ['Предмет', 'I', 'II', 'III', 'IV', 'Год'];
+      headers.forEach(text => {
+        const th = document.createElement('th');
+        th.textContent = text;
+        th.style.backgroundColor = '#6AA9DF';
+        th.style.color = 'white';
+        th.style.padding = '8px';
+        th.style.fontWeight = 'bold';
+        th.style.textAlign = 'center';
+        th.style.border = '1px solid #4A89C0';
+        headerRow.appendChild(th);
+      });
+      
+      thead.appendChild(headerRow);
+      table.appendChild(thead);
+      
+      // Создаем тело таблицы
+      const tbody = document.createElement('tbody');
+      
+      // Добавляем строки предметов
+      reportCard.reportCard.forEach((report, index) => {
+        const row = document.createElement('tr');
+        
+        // Если четный индекс, добавляем фон
+        if (index % 2 === 0) {
+          row.style.backgroundColor = '#F2F9FF';
+        }
+        
+        // Создаем ячейки
+        const cells = [
+          report.subject.name.ru,
+          report.firstPeriod?.ru || '-',
+          report.secondPeriod?.ru || '-',
+          report.thirdPeriod?.ru || '-',
+          report.fourthPeriod?.ru || '-',
+          report.yearMark?.ru || '-'
+        ];
+        
+        cells.forEach((text, cellIndex) => {
+          const td = document.createElement('td');
+          td.textContent = text;
+          td.style.padding = '8px';
+          td.style.border = '1px solid #ddd';
+          
+          // Выравнивание текста
+          if (cellIndex === 0) {
+            td.style.textAlign = 'left';
+          } else {
+            td.style.textAlign = 'center';
+          }
+          
+          row.appendChild(td);
+        });
+        
+        tbody.appendChild(row);
+      });
+      
+      table.appendChild(tbody);
+      
+      // Создаем футер таблицы
+      const tfoot = document.createElement('tfoot');
+      const footerRow = document.createElement('tr');
+      footerRow.style.backgroundColor = '#6AA9DF';
+      footerRow.style.color = 'white';
+      footerRow.style.fontWeight = 'bold';
+      
+      // Ячейка "Итог. GPA"
+      const gpaLabelCell = document.createElement('td');
+      gpaLabelCell.textContent = 'Итог. GPA';
+      gpaLabelCell.style.textAlign = 'left';
+      gpaLabelCell.style.border = '1px solid #4A89C0';
+      gpaLabelCell.style.padding = '8px';
+      
+      // Пустые ячейки
+      for (let i = 0; i < 4; i++) {
+        const emptyCell = document.createElement('td');
+        emptyCell.textContent = '';
+        emptyCell.style.border = '1px solid #4A89C0';
+        emptyCell.style.padding = '8px';
+        footerRow.appendChild(emptyCell);
+      }
+      
+      // Ячейка со значением GPA
+      const gpaValueCell = document.createElement('td');
+      gpaValueCell.textContent = calculatedGPA.toFixed(2);
+      gpaValueCell.style.textAlign = 'center';
+      gpaValueCell.style.border = '1px solid #4A89C0';
+      gpaValueCell.style.padding = '8px';
+      
+      footerRow.appendChild(gpaLabelCell);
+      footerRow.appendChild(gpaValueCell);
+      
+      tfoot.appendChild(footerRow);
+      table.appendChild(tfoot);
+      
+      container.appendChild(table);
+      
+      // Создаем подпись
+      const signature = document.createElement('div');
+      signature.textContent = 'Сделано с сайта samga.top';
+      signature.style.marginTop = '20px';
+      signature.style.marginBottom = '20px';
+      signature.style.color = '#6AA9DF';
+      signature.style.fontStyle = 'italic';
+      signature.style.textAlign = 'right';
+      
+      container.appendChild(signature);
       
       try {
-        // Импорт модуля html2pdf с правильной типизацией
+        // Добавляем контейнер в DOM временно
+        document.body.appendChild(container);
+        
+        // Используем html2pdf
         const html2pdfModule = await import('html2pdf.js');
         const html2pdf = html2pdfModule.default || html2pdfModule;
         
-        // Настройки для PDF с правильной типизацией
         const opt = {
           margin: 10,
           filename: `Табель_${reportCard.schoolYear.name.ru}_${new Date().toLocaleDateString().replace(/\//g, '-')}.pdf`,
           image: { type: 'jpeg', quality: 1.0 },
-          html2canvas: { scale: 2, useCORS: true, logging: true },
+          html2canvas: { 
+            scale: 2,
+            useCORS: true,
+            logging: true,
+            letterRendering: true,
+            allowTaint: true
+          },
           jsPDF: { 
             unit: 'mm', 
             format: 'a4', 
-            orientation: 'portrait' as 'portrait' | 'landscape'
+            orientation: 'portrait' as 'portrait' | 'landscape',
+            putOnlyUsedFonts: true
           }
         };
         
-        // Генерируем PDF с предварительным просмотром для отладки
-        const element = document.body.appendChild(tableHTML);
+        console.log("Создаю PDF с данными:", {
+          subjects: reportCard.reportCard.length,
+          containerHTML: container.innerHTML.substring(0, 100) + "..."
+        });
         
         html2pdf()
-          .from(element)
+          .from(container)
           .set(opt)
           .save()
           .then(() => {
-            document.body.removeChild(element);
+            // Удаляем временный контейнер
+            document.body.removeChild(container);
             showToast('Файл PDF успешно скачан', 'success');
             setLoadingPDF(false);
           })
           .catch((error: any) => {
-            document.body.removeChild(element);
+            document.body.removeChild(container);
             console.error("Ошибка при генерации PDF:", error);
             showToast('Не удалось сгенерировать PDF файл', 'error');
             setLoadingPDF(false);
           });
-      } catch (importError) {
-        console.error("Ошибка при загрузке html2pdf:", importError);
-        showToast('Ошибка загрузки модуля для PDF', 'error');
+      } catch (pdfError) {
+        // Удаляем временный контейнер в случае ошибки
+        if (document.body.contains(container)) {
+          document.body.removeChild(container);
+        }
+        console.error("Ошибка при создании PDF:", pdfError);
+        showToast('Ошибка при создании PDF', 'error');
         setLoadingPDF(false);
       }
     } catch (error) {
