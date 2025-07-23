@@ -3,9 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import QrReader from 'react-qr-scanner';
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@phosphor-icons/react';
+import { Spinner, Camera, CameraRotate } from '@phosphor-icons/react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface QrScannerProps {
   onScan: (data: string) => void;
@@ -18,6 +17,7 @@ const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, onClose }) => {
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isFlashlightOn, setIsFlashlightOn] = useState(false);
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
+  const [key, setKey] = useState(0);
 
   useEffect(() => {
     // Reset camera error when component mounts
@@ -32,9 +32,13 @@ const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, onClose }) => {
   }, []);
 
   const handleScan = (data: { text: string } | null) => {
+    console.log('QR scan data received:', data);
     if (data && data.text) {
+      console.log('Valid QR data found:', data.text);
       setIsLoading(false);
       onScan(data.text);
+    } else {
+      console.log('No valid QR data in scan result');
     }
   };
 
@@ -47,10 +51,22 @@ const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, onClose }) => {
     }
   };
 
+  const toggleCamera = () => {
+    setFacingMode(prevMode => prevMode === 'environment' ? 'user' : 'environment');
+    setKey(prevKey => prevKey + 1); // Force QrReader to remount
+    setIsLoading(true);
+    setCameraError(null);
+    
+    // Reset loading after delay
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+  };
+
   const toggleFlashlight = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
+        video: { facingMode } 
       });
       const track = stream.getVideoTracks()[0];
       
@@ -89,25 +105,24 @@ const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, onClose }) => {
             </div>
           ) : (
             <>
-              <div className="mb-4">
-                <Select value={facingMode} onValueChange={v => setFacingMode(v as 'environment' | 'user')}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Камера" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="environment">Основная камера</SelectItem>
-                    <SelectItem value="user">Фронтальная камера</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
               <div className="relative rounded-lg overflow-hidden w-full aspect-square bg-black">
                 <QrReader
-                  delay={300}
+                  key={key}
+                  delay={100}
                   onError={handleError}
                   onScan={handleScan}
-                  style={{ width: '100%' }}
+                  style={{ 
+                    width: '100%'
+                  }}
                   className="aspect-square"
-                  constraints={{ video: { facingMode } }}
+                  constraints={{
+                    video: {
+                      facingMode: facingMode,
+                      width: 640,
+                      height: 640
+                    }
+                  }}
+                  legacyMode={false}
                 />
                 {isLoading && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
@@ -119,19 +134,30 @@ const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, onClose }) => {
                   <div className="w-2/3 h-2/3 border-2 border-primary rounded-lg"></div>
                 </div>
               </div>
-              <div className="mt-4 flex justify-between gap-2">
-                <Button 
-                  variant="outline" 
-                  onClick={toggleFlashlight} 
-                  className="flex-1"
-                >
-                  {isFlashlightOn ? 'Выключить фонарик' : 'Включить фонарик'}
-                </Button>
+              <div className="mt-4 space-y-2">
+                <div className="flex justify-between gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={toggleCamera} 
+                    className="flex-1 flex items-center justify-center gap-2"
+                  >
+                    <CameraRotate className="h-4 w-4" />
+                    {facingMode === 'environment' ? 'Фронтальная' : 'Основная'}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={toggleFlashlight} 
+                    className="flex-1"
+                    disabled={facingMode === 'user'}
+                  >
+                    {isFlashlightOn ? 'Выключить фонарик' : 'Включить фонарик'}
+                  </Button>
+                </div>
                 {onClose && (
                   <Button 
                     variant="ghost" 
                     onClick={onClose}
-                    className="flex-1"
+                    className="w-full"
                   >
                     Отмена
                   </Button>

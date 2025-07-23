@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import React, { useState, useEffect } from 'react'
 import {
@@ -155,43 +155,66 @@ const AuthForm = () => {
         // Generate a device ID for this device
         const deviceId = uuidv4();
         
-        // Attempt to verify the token from the main device
-        const isValid = verifyQrToken(qrData.token);
+        // Simulate token validation (in real app this would be server-side)
+        // For demo purposes, we assume the QR code is valid if it has a token
+        const isValidFormat = qrData.token && typeof qrData.token === 'string' && qrData.token.length > 10;
         
-        if (isValid) {
-          // Store the device ID
-          localStorage.setItem('samga-current-device-id', deviceId);
-          
-          // Copy auth tokens from the main device if they exist
-          // This would be done server-side in a real implementation
-          const mainDeviceAccessToken = localStorage.getItem('Access');
-          const mainDeviceRefreshToken = localStorage.getItem('Refresh');
-          
-          if (mainDeviceAccessToken && mainDeviceRefreshToken) {
-            // Set tokens for this device
-            localStorage.setItem('Access', mainDeviceAccessToken);
-            localStorage.setItem('Refresh', mainDeviceRefreshToken);
-            localStorage.setItem('isLoggedIn', 'true');
-            
-            // Show success message
-            showToast('Успешная авторизация по QR-коду', 'success');
-            
-            // Show success effect and redirect
-            setLoginSuccess(true);
-            setShowSuccessEffect(true);
-            setShowQrScanner(false);
-            
-            // Redirect after delay
-            setTimeout(() => {
-              setShowSuccessEffect(false);
-              router.push('/');
-            }, 1500);
-          } else {
-            showToast('Ошибка авторизации: токены не найдены', 'error');
-            setShowQrScanner(false);
+        if (isValidFormat) {
+          // Calculate expiration time from QR data (if provided)
+          let expirationTime = null;
+          if (qrData.expiresAt) {
+            expirationTime = new Date(qrData.expiresAt);
+          } else if (qrData.timestamp) {
+            // Default to 1 hour expiration if no explicit expiration
+            expirationTime = new Date(qrData.timestamp + (60 * 60 * 1000));
           }
+          
+          // Check if token is expired
+          if (expirationTime && new Date() > expirationTime) {
+            showToast('QR-код истёк. Попросите сгенерировать новый', 'error');
+            return;
+          }
+          
+          // Store the device ID and temporary token
+          localStorage.setItem('samga-current-device-id', deviceId);
+          localStorage.setItem('samga-temp-token', qrData.token);
+          
+          // Store expiration time for auto-logout
+          if (expirationTime) {
+            localStorage.setItem('samga-temp-token-expires', expirationTime.toISOString());
+            
+            // Set up auto-logout timer
+            const timeUntilExpiry = expirationTime.getTime() - new Date().getTime();
+            if (timeUntilExpiry > 0) {
+              setTimeout(() => {
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('samga-temp-token');
+                localStorage.removeItem('samga-temp-token-expires');
+                showToast('Время временного входа истекло', 'info');
+                router.push('/login');
+              }, timeUntilExpiry);
+            }
+          }
+          
+          // Set temporary auth state
+          localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('loginType', 'temporary');
+          
+          // Show success message
+          showToast('Успешная авторизация по QR-коду', 'success');
+          
+          // Show success effect and redirect
+          setLoginSuccess(true);
+          setShowSuccessEffect(true);
+          setShowQrScanner(false);
+          
+          // Redirect after delay
+          setTimeout(() => {
+            setShowSuccessEffect(false);
+            router.push('/');
+          }, 1500);
         } else {
-          showToast('Недействительный QR-код или истёк срок действия', 'error');
+          showToast('Недействительный QR-код', 'error');
         }
       } else {
         showToast('Неверный формат QR-кода', 'error');

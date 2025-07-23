@@ -24,7 +24,9 @@ const QrGenerator: React.FC<QrGeneratorProps> = ({ onGenerate }) => {
     setTokenData(newTokenData);
     setQrValue(JSON.stringify({
       token: newTokenData.token,
-      timestamp: new Date().getTime()
+      timestamp: new Date().getTime(),
+      expiresAt: newTokenData.expiresAt,
+      createdAt: newTokenData.createdAt
     }));
     
     // Store token in localStorage
