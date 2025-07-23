@@ -14,13 +14,17 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowRight, Eye, EyeSlash, Spinner } from '@phosphor-icons/react'
+import { ArrowRight, Eye, EyeSlash, QrCode, Spinner } from '@phosphor-icons/react'
 import { login } from '@/server/actions/login'
 import { useRouter } from 'next-nprogress-bar'
 import { useToast } from '@/lib/providers/ToastProvider'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { useNotification } from '@/lib/providers/NotificationProvider'
 import { CheckCircle } from '@phosphor-icons/react'
+import QrScanner from '@/components/qr/QrScanner'
+import { v4 as uuidv4 } from 'uuid'
+import { verifyQrToken } from '@/lib/token/qr-auth'
+import { Separator } from '@/components/ui/separator'
 
 const schema = z.object({
   iin: z
@@ -42,6 +46,7 @@ const AuthForm = () => {
   const [countdown, setCountdown] = useState(5);
   const [loading, setLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
+  const [showQrScanner, setShowQrScanner] = useState(false);
   
   const form = useForm<AuthFormType>({
     resolver: zodResolver(schema),
@@ -138,6 +143,69 @@ const AuthForm = () => {
         }
       });
     }
+  };
+
+  // Handle successful QR scan
+  const handleQrScan = (data: string) => {
+    try {
+      // Parse QR code data
+      const qrData = JSON.parse(data);
+      
+      if (qrData && qrData.token) {
+        // Generate a device ID for this device
+        const deviceId = uuidv4();
+        
+        // Attempt to verify the token from the main device
+        const isValid = verifyQrToken(qrData.token);
+        
+        if (isValid) {
+          // Store the device ID
+          localStorage.setItem('samga-current-device-id', deviceId);
+          
+          // Copy auth tokens from the main device if they exist
+          // This would be done server-side in a real implementation
+          const mainDeviceAccessToken = localStorage.getItem('Access');
+          const mainDeviceRefreshToken = localStorage.getItem('Refresh');
+          
+          if (mainDeviceAccessToken && mainDeviceRefreshToken) {
+            // Set tokens for this device
+            localStorage.setItem('Access', mainDeviceAccessToken);
+            localStorage.setItem('Refresh', mainDeviceRefreshToken);
+            localStorage.setItem('isLoggedIn', 'true');
+            
+            // Show success message
+            showToast('Успешная авторизация по QR-коду', 'success');
+            
+            // Show success effect and redirect
+            setLoginSuccess(true);
+            setShowSuccessEffect(true);
+            setShowQrScanner(false);
+            
+            // Redirect after delay
+            setTimeout(() => {
+              setShowSuccessEffect(false);
+              router.push('/');
+            }, 1500);
+          } else {
+            showToast('Ошибка авторизации: токены не найдены', 'error');
+            setShowQrScanner(false);
+          }
+        } else {
+          showToast('Недействительный QR-код или истёк срок действия', 'error');
+        }
+      } else {
+        showToast('Неверный формат QR-кода', 'error');
+      }
+    } catch (error) {
+      console.error('QR code scan error:', error);
+      showToast('Ошибка при сканировании QR-кода', 'error');
+    }
+  };
+  
+  // Handle QR scanner error
+  const handleQrError = (error: Error) => {
+    console.error('QR scanner error:', error);
+    showToast('Ошибка камеры при сканировании QR-кода', 'error');
   };
 
   const onSubmit: SubmitHandler<AuthFormType> = async ({ iin, password }) => {
@@ -306,6 +374,22 @@ const AuthForm = () => {
             {loginSuccess && <CheckCircle className="mr-2 h-4 w-4" />}
             {loginSuccess ? 'Вход выполнен' : 'Войти'}
           </Button>
+          
+          <div className="relative flex items-center justify-center my-6">
+            <Separator className="flex-1" />
+            <span className="mx-4 text-xs text-muted-foreground">или</span>
+            <Separator className="flex-1" />
+          </div>
+          
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full h-12 rounded-xl text-base font-medium"
+            onClick={() => setShowQrScanner(true)}
+          >
+            <QrCode className="mr-2 h-5 w-5" />
+            Войти по QR-коду
+          </Button>
         </form>
       </Form>
       
@@ -333,6 +417,22 @@ const AuthForm = () => {
             >
               Отмена
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* QR Scanner Dialog */}
+      <Dialog open={showQrScanner} onOpenChange={setShowQrScanner}>
+        <DialogContent className="max-w-md p-0 overflow-hidden">
+          <DialogHeader className="p-4 pb-0">
+            <DialogTitle>Сканирование QR-кода</DialogTitle>
+          </DialogHeader>
+          <div className="p-4">
+            <QrScanner 
+              onScan={handleQrScan}
+              onError={handleQrError}
+              onClose={() => setShowQrScanner(false)}
+            />
           </div>
         </DialogContent>
       </Dialog>
