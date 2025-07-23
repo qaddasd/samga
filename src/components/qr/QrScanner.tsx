@@ -5,6 +5,7 @@ import QrReader from 'react-qr-scanner';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@phosphor-icons/react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface QrScannerProps {
   onScan: (data: string) => void;
@@ -16,6 +17,7 @@ const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, onClose }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isFlashlightOn, setIsFlashlightOn] = useState(false);
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
 
   useEffect(() => {
     // Reset camera error when component mounts
@@ -87,6 +89,17 @@ const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, onClose }) => {
             </div>
           ) : (
             <>
+              <div className="mb-4">
+                <Select value={facingMode} onValueChange={v => setFacingMode(v as 'environment' | 'user')}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Камера" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="environment">Основная камера</SelectItem>
+                    <SelectItem value="user">Фронтальная камера</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="relative rounded-lg overflow-hidden w-full aspect-square bg-black">
                 <QrReader
                   delay={300}
@@ -94,6 +107,7 @@ const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, onClose }) => {
                   onScan={handleScan}
                   style={{ width: '100%' }}
                   className="aspect-square"
+                  constraints={{ video: { facingMode } }}
                 />
                 {isLoading && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
