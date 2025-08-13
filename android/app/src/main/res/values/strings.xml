@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">samga</string>
+    <string name="title_activity_main">samga</string>
+    <string name="package_name">com.samga.top</string>
+    <string name="custom_url_scheme">com.samga.top</string>
+</resources>
