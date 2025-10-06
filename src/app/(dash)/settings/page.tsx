@@ -1,10 +1,18 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import ResponsiveModal from '@/components/ui/responsive-modal'
-import { SignOut } from '@phosphor-icons/react'
+import { QrCode, SignOut } from '@phosphor-icons/react'
 import { useToast } from '@/lib/providers/ToastProvider'
 import { logout } from '@/server/actions/logout'
 import { useRouter } from 'next-nprogress-bar'
@@ -14,6 +22,10 @@ import useSettingsStore from '@/lib/hooks/store/useSettingsStore'
 import ThemeSwitcher from '@/components/ui/theme-switcher'
 import { env } from '@/env'
 import useNativePlatform from '@/lib/hooks/useNativePlatform'
+import QrGenerator from '@/components/qr/QrGenerator'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { DeviceConnection, getConnectedDevices } from '@/lib/token/qr-auth'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 const Page = () => {
   const { showToast } = useToast()
@@ -23,6 +35,8 @@ const Page = () => {
   const [gpaSystem, setGpaSystem] = useState<'4' | '5'>('5')
   const { updateSort, updateGpaSystem } = useSettingsStore()
   const { appVersion } = useNativePlatform()
+  const [showQrDialog, setShowQrDialog] = useState(false)
+  const [connectedDevices, setConnectedDevices] = useState<DeviceConnection[]>([])
   
   // Безопасная инициализация состояния из хранилища
   useEffect(() => {
@@ -30,6 +44,11 @@ const Page = () => {
     const settings = useSettingsStore.getState()
     setSort(settings.sort)
     setGpaSystem(settings.gpaSystem || '5')
+    
+    // Load connected devices
+    if (typeof window !== 'undefined') {
+      setConnectedDevices(getConnectedDevices())
+    }
   }, [])
   
   // Обработчик изменения сортировки
@@ -43,6 +62,32 @@ const Page = () => {
     setGpaSystem(newSystem)
     updateGpaSystem(newSystem)
     showToast(`Система GPA изменена на ${newSystem}-балльную`, 'success')
+  }
+
+  // Format device connection date
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return new Intl.DateTimeFormat('ru', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date)
+  }
+
+  // Remove a connected device
+  const removeDevice = (deviceId: string) => {
+    try {
+      const devices = getConnectedDevices()
+      const updatedDevices = devices.filter(device => device.deviceId !== deviceId)
+      localStorage.setItem('samga-authorized-devices', JSON.stringify(updatedDevices))
+      setConnectedDevices(updatedDevices)
+      showToast('Устройство отключено', 'success')
+    } catch (error) {
+      console.error('Failed to remove device:', error)
+      showToast('Ошибка при отключении устройства', 'error')
+    }
   }
 
   // Безопасное удаление данных при выходе
@@ -110,7 +155,58 @@ const Page = () => {
             </Select>
           </div>
           
-          {/* Версия скрыта по запросу */}
+          <div className="flex flex-row items-center justify-between py-1.5">
+            <p className="text-lg">Версия</p>
+            <div className="text-sm bg-primary/10 px-2.5 py-1 rounded-full font-medium text-primary">
+              {appVersion || env.NEXT_PUBLIC_APP_VERSION || '2.5'}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="mt-8">
+        <h3 className="scroll-m-20 text-xl font-semibold leading-tight tracking-tight">
+          Устройства
+        </h3>
+        <Separator className="my-4" />
+        
+        <div className="space-y-4">
+          <div className="flex flex-row items-center justify-between py-1.5">
+            <div>
+              <p className="text-lg">Подключение устройств</p>
+              <p className="text-sm text-muted-foreground">Подключите другое устройство с помощью QR-кода</p>
+            </div>
+            <Button 
+              onClick={() => setShowQrDialog(true)}
+              className="flex gap-2"
+            >
+              <QrCode size={18} />
+              <span>Показать QR</span>
+            </Button>
+          </div>
+          
+          {connectedDevices.length > 0 && (
+            <div className="space-y-3 mt-2">
+              <p className="font-medium">Подключенные устройства:</p>
+              {connectedDevices.map((device) => (
+                <div key={device.deviceId} className="bg-muted rounded-md p-3 flex justify-between items-center">
+                  <div>
+                    <p className="font-medium">{device.deviceId.substring(0, 8)}...</p>
+                    <p className="text-xs text-muted-foreground">
+                      Подключено: {formatDate(device.connectedAt)}
+                    </p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => removeDevice(device.deviceId)}
+                  >
+                    Отключить
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
       
@@ -147,6 +243,20 @@ const Page = () => {
         хранятся локально на вашем устройстве. Они никуда не передаются, не
         обрабатываются.
       </p>
+      
+      {/* QR Code Dialog */}
+      <Dialog open={showQrDialog} onOpenChange={setShowQrDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Подключение устройства</DialogTitle>
+            <DialogDescription>
+              Отсканируйте этот QR-код на другом устройстве для входа в аккаунт
+            </DialogDescription>
+          </DialogHeader>
+          
+          <QrGenerator />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

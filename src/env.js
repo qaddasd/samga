@@ -10,7 +10,7 @@ export const env = createEnv({
   client: {
     NEXT_PUBLIC_CONTACT_LINK: z.string().url().optional(),
     NEXT_PUBLIC_REPO_LINK: z.string().url().optional(),
-    NEXT_PUBLIC_APP_VERSION: z.string().optional().default('2.0 beta'),
+    NEXT_PUBLIC_APP_VERSION: z.string().optional().default('2.5'),
   },
 
   runtimeEnv: {
@@ -18,7 +18,7 @@ export const env = createEnv({
     RUNTIME: process.env.RUNTIME,
     NEXT_PUBLIC_CONTACT_LINK: process.env.NEXT_PUBLIC_CONTACT_LINK,
     NEXT_PUBLIC_REPO_LINK: process.env.NEXT_PUBLIC_REPO_LINK,
-    NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION || '2.0 beta',
+    NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION || '2.5',
   },
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
   emptyStringAsUndefined: true,

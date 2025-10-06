@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import React, { useState, useEffect } from 'react'
 import {
@@ -14,13 +14,17 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowRight, ArrowLeft, Eye, EyeSlash, Spinner } from '@phosphor-icons/react'
+import { ArrowRight, Eye, EyeSlash, QrCode, Spinner } from '@phosphor-icons/react'
 import { login } from '@/server/actions/login'
 import { useRouter } from 'next-nprogress-bar'
 import { useToast } from '@/lib/providers/ToastProvider'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { useNotification } from '@/lib/providers/NotificationProvider'
 import { CheckCircle } from '@phosphor-icons/react'
+import QrScanner from '@/components/qr/QrScanner'
+import { v4 as uuidv4 } from 'uuid'
+import { verifyQrToken } from '@/lib/token/qr-auth'
+import { Separator } from '@/components/ui/separator'
 
 const schema = z.object({
   iin: z
@@ -33,12 +37,7 @@ const schema = z.object({
 
 type AuthFormType = z.infer<typeof schema>
 
-interface AuthFormProps {
-  onToggleBenefits?: () => void
-  benefitsOpen?: boolean
-}
-
-const AuthForm: React.FC<AuthFormProps> = ({ onToggleBenefits, benefitsOpen }) => {
+const AuthForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showSuccessEffect, setShowSuccessEffect] = useState(false);
   const [showForgotPasswordDialog, setShowForgotPasswordDialog] = useState(false);
@@ -47,6 +46,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onToggleBenefits, benefitsOpen }) =
   const [countdown, setCountdown] = useState(5);
   const [loading, setLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
+  const [showQrScanner, setShowQrScanner] = useState(false);
   
   const form = useForm<AuthFormType>({
     resolver: zodResolver(schema),
@@ -145,6 +145,92 @@ const AuthForm: React.FC<AuthFormProps> = ({ onToggleBenefits, benefitsOpen }) =
     }
   };
 
+  // Handle successful QR scan
+  const handleQrScan = (data: string) => {
+    try {
+      // Parse QR code data
+      const qrData = JSON.parse(data);
+      
+      if (qrData && qrData.token) {
+        // Generate a device ID for this device
+        const deviceId = uuidv4();
+        
+        // Simulate token validation (in real app this would be server-side)
+        // For demo purposes, we assume the QR code is valid if it has a token
+        const isValidFormat = qrData.token && typeof qrData.token === 'string' && qrData.token.length > 10;
+        
+        if (isValidFormat) {
+          // Calculate expiration time from QR data (if provided)
+          let expirationTime = null;
+          if (qrData.expiresAt) {
+            expirationTime = new Date(qrData.expiresAt);
+          } else if (qrData.timestamp) {
+            // Default to 1 hour expiration if no explicit expiration
+            expirationTime = new Date(qrData.timestamp + (60 * 60 * 1000));
+          }
+          
+          // Check if token is expired
+          if (expirationTime && new Date() > expirationTime) {
+            showToast('QR-код истёк. Попросите сгенерировать новый', 'error');
+            return;
+          }
+          
+          // Store the device ID and temporary token
+          localStorage.setItem('samga-current-device-id', deviceId);
+          localStorage.setItem('samga-temp-token', qrData.token);
+          
+          // Store expiration time for auto-logout
+          if (expirationTime) {
+            localStorage.setItem('samga-temp-token-expires', expirationTime.toISOString());
+            
+            // Set up auto-logout timer
+            const timeUntilExpiry = expirationTime.getTime() - new Date().getTime();
+            if (timeUntilExpiry > 0) {
+              setTimeout(() => {
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('samga-temp-token');
+                localStorage.removeItem('samga-temp-token-expires');
+                showToast('Время временного входа истекло', 'info');
+                router.push('/login');
+              }, timeUntilExpiry);
+            }
+          }
+          
+          // Set temporary auth state
+          localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('loginType', 'temporary');
+          
+          // Show success message
+          showToast('Успешная авторизация по QR-коду', 'success');
+          
+          // Show success effect and redirect
+          setLoginSuccess(true);
+          setShowSuccessEffect(true);
+          setShowQrScanner(false);
+          
+          // Redirect after delay
+          setTimeout(() => {
+            setShowSuccessEffect(false);
+            router.push('/');
+          }, 1500);
+        } else {
+          showToast('Недействительный QR-код', 'error');
+        }
+      } else {
+        showToast('Неверный формат QR-кода', 'error');
+      }
+    } catch (error) {
+      console.error('QR code scan error:', error);
+      showToast('Ошибка при сканировании QR-кода', 'error');
+    }
+  };
+  
+  // Handle QR scanner error
+  const handleQrError = (error: Error) => {
+    console.error('QR scanner error:', error);
+    showToast('Ошибка камеры при сканировании QR-кода', 'error');
+  };
+
   const onSubmit: SubmitHandler<AuthFormType> = async ({ iin, password }) => {
     if (!iin || !password) {
       showToast('Введите логин и пароль', 'error');
@@ -191,9 +277,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ onToggleBenefits, benefitsOpen }) =
             localStorage.setItem('Refresh', refreshToken);
           }
           
-          // Устанавливаем флаг авторизации и снимаем флаг выхода
+          // Устанавливаем флаг авторизации
           localStorage.setItem('isLoggedIn', 'true');
-          localStorage.removeItem('samga-logout-flag');
         } catch (e) {
           console.error('Failed to save auth data')
         }
@@ -228,25 +313,10 @@ const AuthForm: React.FC<AuthFormProps> = ({ onToggleBenefits, benefitsOpen }) =
   };
 
   return (
-    <div className="relative">
+    <>
       {/* Эффект зеленого свечения при успешной авторизации */}
       {showSuccessEffect && (
         <div className="success-glow-effect"></div>
-      )}
-      {/* Переключатель панели преимуществ на ПК (закреплён у левого края формы) */}
-      {onToggleBenefits && (
-        <button
-          type="button"
-          aria-label={benefitsOpen ? 'Скрыть панель преимуществ' : 'Показать панель преимуществ'}
-          onClick={onToggleBenefits}
-          className="hidden md:flex absolute -left-6 top-1/2 -translate-y-1/2 z-20 h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-2 ring-primary/40 transition-transform hover:scale-105 active:scale-95"
-        >
-          {benefitsOpen ? (
-            <ArrowLeft className="h-5 w-5" />
-          ) : (
-            <ArrowRight className="h-5 w-5" />
-          )}
-        </button>
       )}
       
       <Form {...form}>
@@ -262,10 +332,10 @@ const AuthForm: React.FC<AuthFormProps> = ({ onToggleBenefits, benefitsOpen }) =
                       <Input 
                         placeholder="ИИН" 
                         autoComplete="username" 
-                        className="h-12 rounded-xl bg-muted/50 pl-4 pr-10 text-base transition-colors focus:bg-background" 
+                        className="h-12 rounded-xl bg-muted/50 pl-4 text-base transition-colors focus:bg-background" 
                         {...field} 
                       />
-                      <div className="absolute bottom-1.5 right-3 text-[10px] leading-none text-muted-foreground select-none">
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
                         {field.value.length}/12
                       </div>
                     </div>
@@ -308,24 +378,6 @@ const AuthForm: React.FC<AuthFormProps> = ({ onToggleBenefits, benefitsOpen }) =
           />
           </div>
           
-          {/* Кнопка открытия панели преимуществ — ниже полей, справа; на мобилках видна */}
-          {onToggleBenefits && (
-            <div className="mt-2 flex justify-end md:hidden">
-              <button
-                type="button"
-                aria-label={benefitsOpen ? 'Скрыть панель преимуществ' : 'Показать панель преимуществ'}
-                onClick={onToggleBenefits}
-                className="grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground shadow-md ring-1 ring-primary/40 transition-transform hover:scale-105 active:scale-95"
-              >
-                {benefitsOpen ? (
-                  <ArrowLeft className="h-5 w-5" />
-                ) : (
-                  <ArrowRight className="h-5 w-5" />
-                )}
-              </button>
-            </div>
-          )}
-          
           <div className="flex justify-end mt-2 mb-6">
             <button 
               type="button" 
@@ -344,6 +396,22 @@ const AuthForm: React.FC<AuthFormProps> = ({ onToggleBenefits, benefitsOpen }) =
             {loading && <Spinner className="mr-2 h-4 w-4 animate-spin" />}
             {loginSuccess && <CheckCircle className="mr-2 h-4 w-4" />}
             {loginSuccess ? 'Вход выполнен' : 'Войти'}
+          </Button>
+          
+          <div className="relative flex items-center justify-center my-6">
+            <Separator className="flex-1" />
+            <span className="mx-4 text-xs text-muted-foreground">или</span>
+            <Separator className="flex-1" />
+          </div>
+          
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full h-12 rounded-xl text-base font-medium"
+            onClick={() => setShowQrScanner(true)}
+          >
+            <QrCode className="mr-2 h-5 w-5" />
+            Войти по QR-коду
           </Button>
         </form>
       </Form>
@@ -376,29 +444,49 @@ const AuthForm: React.FC<AuthFormProps> = ({ onToggleBenefits, benefitsOpen }) =
         </DialogContent>
       </Dialog>
       
+      {/* QR Scanner Dialog */}
+      <Dialog open={showQrScanner} onOpenChange={setShowQrScanner}>
+        <DialogContent className="max-w-md p-0 overflow-hidden">
+          <DialogHeader className="p-4 pb-0">
+            <DialogTitle>Сканирование QR-кода</DialogTitle>
+          </DialogHeader>
+          <div className="p-4">
+            <QrScanner 
+              onScan={handleQrScan}
+              onError={handleQrError}
+              onClose={() => setShowQrScanner(false)}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+      
       <style jsx global>{`
         @keyframes glowEffect {
-          0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-          40% { box-shadow: 0 0 0 40px rgba(34, 197, 94, 0.22); }
-          60% { box-shadow: 0 0 0 58px rgba(34, 197, 94, 0.18); }
-          100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+          0% {
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+          }
+          50% {
+            box-shadow: 0 0 0 20px rgba(34, 197, 94, 0.3);
+          }
+          100% {
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+          }
         }
         
         .success-glow-effect {
           position: fixed;
-          inset: 0;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
           z-index: 100;
           pointer-events: none;
-          border-radius: 24px;
-          animation: glowEffect 1.8s ease-out forwards;
-          /* Туманная зелёная дымка */
-          box-shadow:
-            0 0 0 6px rgba(34, 197, 94, 0.45),
-            0 0 0 20px rgba(34, 197, 94, 0.22),
-            0 0 0 40px rgba(34, 197, 94, 0.18);
+          border: 8px solid rgba(34, 197, 94, 0.4);
+          border-radius: 10px;
+          animation: glowEffect 1.5s ease-out forwards;
         }
       `}</style>
-    </div>
+    </>
   )
 }
 

@@ -14,10 +14,6 @@ const QueryProvider: FC<PropsWithChildren> = ({ children }) => {
   // Функция для проверки и обновления токена
   const checkAndRefreshToken = () => {
     try {
-      // Если пользователь явно вышел — не автологиним
-      if (typeof window !== 'undefined' && localStorage.getItem('samga-logout-flag') === 'true') {
-        return false
-      }
       const accessToken = Cookies.get('Access') || localStorage.getItem('Access')
       const refreshToken = Cookies.get('Refresh') || localStorage.getItem('Refresh')
       
@@ -70,16 +66,15 @@ const QueryProvider: FC<PropsWithChildren> = ({ children }) => {
     checkAndRefreshToken()
     
     // Проверяем, есть ли токен в localStorage, и если да, дублируем в cookies
-    const logoutFlag = localStorage.getItem('samga-logout-flag')
-    const localAccessToken = logoutFlag === 'true' ? null : localStorage.getItem('Access')
-    const localRefreshToken = logoutFlag === 'true' ? null : localStorage.getItem('Refresh')
+    const localAccessToken = localStorage.getItem('Access')
+    const localRefreshToken = localStorage.getItem('Refresh')
     
     if (localAccessToken && !Cookies.get('Access')) {
       Cookies.set('Access', localAccessToken, {
         expires: 365, // 1 год
         path: '/',
         sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production'
+        secure: true
       })
       
       if (localRefreshToken) {
@@ -87,7 +82,7 @@ const QueryProvider: FC<PropsWithChildren> = ({ children }) => {
           expires: 365,
           path: '/',
           sameSite: 'lax',
-          secure: process.env.NODE_ENV === 'production'
+          secure: true
         })
       }
     }

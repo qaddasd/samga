@@ -16,7 +16,7 @@ export default function Logout({ variant = 'default', className = '' }: LogoutPr
   const { showToast } = useToast()
 
   // Улучшенная функция выхода с гарантированной очисткой данных
-  const handleLogout = async () => {
+  const handleLogout = () => {
     try {
       console.log('Выполняется выход из системы...')
       
@@ -30,30 +30,49 @@ export default function Logout({ variant = 'default', className = '' }: LogoutPr
         'user-password',
         'samga-fast-reauth',
         'device-needs-reauth',
-        'last-auth-source',
-        'Access',
-        'Refresh',
-        'isLoggedIn'
+        'last-auth-source'
       ]
       
+      // Попытка очистить все ключи
       keysToRemove.forEach(key => {
-        try { localStorage.removeItem(key) } catch {}
+        try {
+          localStorage.removeItem(key)
+          console.log(`Ключ ${key} успешно удален`)
+        } catch (e) {
+          console.error(`Ошибка при удалении ключа ${key}:`, e)
+        }
       })
       
-      // Флаг «вышел из аккаунта», чтобы провайдеры не автологинили
+      // Устанавливаем флаг выхода из системы
       localStorage.setItem('samga-logout-flag', 'true')
       
-      // Просим бэкенд удалить куки Access/Refresh
-      try {
-        await fetch('/api/logout', { method: 'POST' })
-      } catch {}
+      // Двойная проверка критических ключей
+      if (localStorage.getItem('user-iin') || localStorage.getItem('user-password')) {
+        console.warn('ВНИМАНИЕ! Критические данные не были очищены, принудительная очистка...')
+        
+        // Принудительная очистка
+        localStorage.clear()
+        
+        // Восстанавливаем только флаг выхода
+        localStorage.setItem('samga-logout-flag', 'true')
+      }
       
+      // Показываем уведомление
       showToast('Выход выполнен успешно', 'success')
-      setTimeout(() => { window.location.href = '/login' }, 400)
+      
+      // Переходим на страницу входа с задержкой
+      setTimeout(() => {
+        window.location.href = '/login'
+      }, 500)
+      
     } catch (error) {
       console.error('Критическая ошибка при выходе:', error)
       showToast('Ошибка при выходе из системы', 'error')
-      setTimeout(() => { window.location.href = '/login' }, 800)
+      
+      // В случае ошибки выполняем принудительный переход
+      setTimeout(() => {
+        window.location.href = '/login'
+      }, 1000)
     }
   }
 

@@ -3,8 +3,6 @@ import { CityAbbr } from '@/shared/constants/cities'
 import { compress } from '@/lib/token/compressor'
 import { decode } from '@/lib/token/jwt'
 
-const isProd = process.env.NODE_ENV === 'production'
-
 const issue = async (
   accessToken: string,
   refreshToken: string,
@@ -22,7 +20,7 @@ const issue = async (
     sameSite: 'lax',
     httpOnly: false,
     expires: new Date(Date.now() + 60 * 60 * 24 * 365 * 1000),
-    secure: isProd,
+    secure: true,
   })
 
   // The refresh token format is (encrypted NIS issued JWT token)::(device code used to refresh tokens)
@@ -33,7 +31,7 @@ const issue = async (
     sameSite: 'lax',
     httpOnly: false,
     expires: new Date(Date.now() + 60 * 60 * 24 * 365 * 2 * 1000),
-    secure: isProd,
+    secure: true,
   })
 }
 
