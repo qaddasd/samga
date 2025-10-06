@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 210, 100%, 98%;
+  --foreground: 0, 0%, 0%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 0%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 0%;
+  --primary: 200, 80%, 50%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210, 40%, 90%;
+  --secondary-foreground: 0 0% 0%;
+  --muted: 210, 40%, 90%;
+  --muted-foreground: 0 0% 40%;
+  --accent: 210, 40%, 90%;
+  --accent-foreground: 0 0% 0%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 210, 40%, 90%;
+  --input: 210, 40%, 90%;
+  --ring: 200, 80%, 50%;
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  --card: 0 0% 10%;
+  --card-foreground: 0 0% 100%;
+  --popover: 0 0% 0%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 200, 80%, 50%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 15%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 60%;
+  --accent: 0 0% 15%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 15%;
+  --input: 0 0% 15%;
+  --ring: 200, 80%, 50%;
+}
+
+/* Плавная смена темы */
+:root,
+:root.dark {
+  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+html, body {
+  transition: background-color 0.3s ease;
+}
+
+::selection {
+  color: black;
+  background-color: hsl(var(--primary));
+}
+
+* {
+  @apply border-border;
+}
+body {
+  @apply bg-background text-foreground;
+}
+
+/* Анимации появления для страниц */
+@keyframes slideInUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.98);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Анимации появления для вкладок */
+.tab-content {
+  animation: fadeIn 0.4s ease-out;
+}
+
+.page-transition {
+  animation: slideInUp 0.3s ease-out;
+}
+
+/* Анимация для карточек и элементов списка */
+.card-animation, 
+.list-item-animation {
+  animation: scaleIn 0.3s ease-out;
+}
+
+/* Анимации для выпадающих меню и модалок */
+.dropdown-animation {
+  animation: slideInUp 0.2s ease-out;
+}

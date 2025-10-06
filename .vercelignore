@@ -1,0 +1,12 @@
+# Мобильные платформы
+/android/
+/ios/
+/node_modules/
+/npm-debug.log
+/out/
+/MOBILE_APP_README.md
+init-mobile-apps.js
+capacitor.config.ts
+android.keystore
+.github/
+.vscode/ 
