@@ -10,6 +10,7 @@ import { z } from 'zod'
 import { getJournalElement } from '@/features/getJournalElement'
 import { isAxiosError } from 'axios'
 import { getReports } from '@/features/getReports'
+import { getAktauSchedule } from '@/features/getAktauSchedule'
 
 const app = new Hono<{
   Variables: {
@@ -33,6 +34,28 @@ app.get('/contingent', async (c) => {
     firstName: FirstName,
     lastName: SecondName,
   })
+})
+
+app.get('/schedule', async (c) => {
+  const { accessToken } = c.get('session')
+
+  try {
+    const schedule = await getAktauSchedule(accessToken)
+    return c.json(schedule)
+  } catch (e) {
+    console.log(e)
+    throw new HTTPException(503, {
+      res: Response.json(
+        {
+          message: 'Service unavailable',
+          cause: 'Schedule source is currently unavailable',
+        },
+        {
+          status: 503,
+        },
+      ),
+    })
+  }
 })
 
 app.get('/journal', async (c) => {

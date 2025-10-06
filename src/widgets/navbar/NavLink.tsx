@@ -20,12 +20,11 @@ const NavLink: FC<NavLinkProps> = ({ icon, text, href, alternateHrefs = [] }) =>
   return (
     <Link
       href={isActive ? '#' : href}
+      aria-label={text}
+      title={text}
       className={`mx-2 flex w-fit grow flex-col justify-center text-center transition-colors hover:text-primary ${isActive ? 'text-primary hover:text-muted-foreground' : ''}`}
     >
       {icon}
-      <span className={`leading-2 hidden text-[13px] text-current sm:block`}>
-        {text}
-      </span>
     </Link>
   )
 }

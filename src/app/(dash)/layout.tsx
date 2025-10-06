@@ -47,7 +47,7 @@ const Layout: FC<PropsWithChildren> = ({ children }) => {
         </div>
 
         <div className="mt-3 text-center text-xs text-muted-foreground/70">
-          <p>Samga App v2.5</p>
+          <p>samga.nis 2.4</p>
         </div>
         
         <div className="mt-4 flex justify-center">

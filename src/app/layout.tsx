@@ -27,9 +27,12 @@ const fontSans = FontSans({
 })
 
 export const metadata: Metadata = {
-  title: 'samga.nis 2.0 beta - Электронный дневник НИШ с быстрым переходом',
-  description: 'Самга (SAMGA) - официальный электронный дневник для школьников НИШ. Удобный дневник для учеников, учителей и родителей. Оценки, домашние задания и уведомления в одном месте.',
-  keywords: 'самга, samga, самгау, samgay, электронный дневник, ниш, nis, мектеп, суш, дневник, электронный журнал, школа, suschnazarbaev, eni2, kundelik, электронный дневник, НИШ, samga top, самга, уведомления',
+  title: 'samga.nis 2.4 — Электронный дневник НИШ с быстрым переходом',
+  description:
+    'samga.nis 2.4 — электронный дневник для школьников НИШ. Оценки и уведомления в одном месте. Современный интерфейс, быстрый доступ.',
+  keywords:
+    'samga.nis, samga, электронный дневник, ниш, nis, дневник, электронный журнал, школа, оценки, задания, уведомления, 2.4',
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
   icons: [
     { rel: 'icon', url: '/favicon.ico', type: 'image/x-icon' },
     { rel: 'icon', url: '/favicon.svg', type: 'image/svg+xml' },
@@ -41,25 +44,25 @@ export const metadata: Metadata = {
   ],
   manifest: '/site.webmanifest',
   appleWebApp: {
-    title: 'samga.nis',
+    title: 'samga.nis 2.4',
     statusBarStyle: 'black-translucent',
     capable: true,
-    startupImage: [
-      '/apple-icon-180.png'
-    ],
+    startupImage: ['/apple-icon-180.png'],
   },
   openGraph: {
     type: 'website',
     locale: 'ru_RU',
     url: 'https://samga.top/',
-    title: 'Самга 2.0 beta - Электронный дневник НИШ с автоматическим переходом',
-    description: 'Самга (SAMGA) - официальный электронный дневник для школьников. Удобный дневник для учеников, учителей и родителей.',
-    siteName: 'Самга 2.0 beta - Электронный дневник',
+    title: 'samga.nis 2.4 — Электронный дневник НИШ',
+    description:
+      'samga.nis 2.4 — электронный дневник для школьников. Оценки и уведомления в одном месте.',
+    siteName: 'samga.nis 2.4 — Электронный дневник',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Самга 2.0 beta - Электронный дневник НИШ',
-    description: 'Самга (SAMGA) - официальный электронный дневник для школьников. Удобный дневник для учеников, учителей и родителей.',
+    title: 'samga.nis 2.4 — Электронный дневник НИШ',
+    description:
+      'samga.nis 2.4 — электронный дневник для школьников. Оценки и уведомления в одном месте.',
   },
   alternates: {
     canonical: 'https://samga.top/',

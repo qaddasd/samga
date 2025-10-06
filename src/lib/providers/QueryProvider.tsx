@@ -130,6 +130,29 @@ const QueryProvider: FC<PropsWithChildren> = ({ children }) => {
 
   const persister = IDBQueryPersistor()
 
+  // Actively refresh critical data when user returns to the app
+  useEffect(() => {
+    const refetchCritical = () => {
+      checkAndRefreshToken()
+      queryClient.invalidateQueries({ queryKey: ['journal'], refetchType: 'active' })
+      queryClient.invalidateQueries({ queryKey: ['reports'], refetchType: 'active' })
+      queryClient.invalidateQueries({ queryKey: ['schedule'], refetchType: 'active' })
+    }
+
+    const onFocus = () => refetchCritical()
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') refetchCritical()
+    }
+
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisibility)
+
+    return () => {
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [queryClient])
+
   return (
     <PersistQueryClientProvider
       client={queryClient}

@@ -14,17 +14,14 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowRight, Eye, EyeSlash, QrCode, Spinner } from '@phosphor-icons/react'
+import { ArrowRight, Eye, EyeSlash, Spinner } from '@phosphor-icons/react'
 import { login } from '@/server/actions/login'
 import { useRouter } from 'next-nprogress-bar'
 import { useToast } from '@/lib/providers/ToastProvider'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { useNotification } from '@/lib/providers/NotificationProvider'
 import { CheckCircle } from '@phosphor-icons/react'
-import QrScanner from '@/components/qr/QrScanner'
-import { v4 as uuidv4 } from 'uuid'
-import { verifyQrToken } from '@/lib/token/qr-auth'
-import { Separator } from '@/components/ui/separator'
+// QR login removed by request
 
 const schema = z.object({
   iin: z
@@ -46,7 +43,7 @@ const AuthForm = () => {
   const [countdown, setCountdown] = useState(5);
   const [loading, setLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
-  const [showQrScanner, setShowQrScanner] = useState(false);
+  // QR login removed
   
   const form = useForm<AuthFormType>({
     resolver: zodResolver(schema),
@@ -145,91 +142,7 @@ const AuthForm = () => {
     }
   };
 
-  // Handle successful QR scan
-  const handleQrScan = (data: string) => {
-    try {
-      // Parse QR code data
-      const qrData = JSON.parse(data);
-      
-      if (qrData && qrData.token) {
-        // Generate a device ID for this device
-        const deviceId = uuidv4();
-        
-        // Simulate token validation (in real app this would be server-side)
-        // For demo purposes, we assume the QR code is valid if it has a token
-        const isValidFormat = qrData.token && typeof qrData.token === 'string' && qrData.token.length > 10;
-        
-        if (isValidFormat) {
-          // Calculate expiration time from QR data (if provided)
-          let expirationTime = null;
-          if (qrData.expiresAt) {
-            expirationTime = new Date(qrData.expiresAt);
-          } else if (qrData.timestamp) {
-            // Default to 1 hour expiration if no explicit expiration
-            expirationTime = new Date(qrData.timestamp + (60 * 60 * 1000));
-          }
-          
-          // Check if token is expired
-          if (expirationTime && new Date() > expirationTime) {
-            showToast('QR-код истёк. Попросите сгенерировать новый', 'error');
-            return;
-          }
-          
-          // Store the device ID and temporary token
-          localStorage.setItem('samga-current-device-id', deviceId);
-          localStorage.setItem('samga-temp-token', qrData.token);
-          
-          // Store expiration time for auto-logout
-          if (expirationTime) {
-            localStorage.setItem('samga-temp-token-expires', expirationTime.toISOString());
-            
-            // Set up auto-logout timer
-            const timeUntilExpiry = expirationTime.getTime() - new Date().getTime();
-            if (timeUntilExpiry > 0) {
-              setTimeout(() => {
-                localStorage.removeItem('isLoggedIn');
-                localStorage.removeItem('samga-temp-token');
-                localStorage.removeItem('samga-temp-token-expires');
-                showToast('Время временного входа истекло', 'info');
-                router.push('/login');
-              }, timeUntilExpiry);
-            }
-          }
-          
-          // Set temporary auth state
-          localStorage.setItem('isLoggedIn', 'true');
-          localStorage.setItem('loginType', 'temporary');
-          
-          // Show success message
-          showToast('Успешная авторизация по QR-коду', 'success');
-          
-          // Show success effect and redirect
-          setLoginSuccess(true);
-          setShowSuccessEffect(true);
-          setShowQrScanner(false);
-          
-          // Redirect after delay
-          setTimeout(() => {
-            setShowSuccessEffect(false);
-            router.push('/');
-          }, 1500);
-        } else {
-          showToast('Недействительный QR-код', 'error');
-        }
-      } else {
-        showToast('Неверный формат QR-кода', 'error');
-      }
-    } catch (error) {
-      console.error('QR code scan error:', error);
-      showToast('Ошибка при сканировании QR-кода', 'error');
-    }
-  };
-  
-  // Handle QR scanner error
-  const handleQrError = (error: Error) => {
-    console.error('QR scanner error:', error);
-    showToast('Ошибка камеры при сканировании QR-кода', 'error');
-  };
+  // QR login removed
 
   const onSubmit: SubmitHandler<AuthFormType> = async ({ iin, password }) => {
     if (!iin || !password) {
@@ -398,21 +311,7 @@ const AuthForm = () => {
             {loginSuccess ? 'Вход выполнен' : 'Войти'}
           </Button>
           
-          <div className="relative flex items-center justify-center my-6">
-            <Separator className="flex-1" />
-            <span className="mx-4 text-xs text-muted-foreground">или</span>
-            <Separator className="flex-1" />
-          </div>
-          
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full h-12 rounded-xl text-base font-medium"
-            onClick={() => setShowQrScanner(true)}
-          >
-            <QrCode className="mr-2 h-5 w-5" />
-            Войти по QR-коду
-          </Button>
+          {/* QR login removed by request */}
         </form>
       </Form>
       
@@ -444,21 +343,7 @@ const AuthForm = () => {
         </DialogContent>
       </Dialog>
       
-      {/* QR Scanner Dialog */}
-      <Dialog open={showQrScanner} onOpenChange={setShowQrScanner}>
-        <DialogContent className="max-w-md p-0 overflow-hidden">
-          <DialogHeader className="p-4 pb-0">
-            <DialogTitle>Сканирование QR-кода</DialogTitle>
-          </DialogHeader>
-          <div className="p-4">
-            <QrScanner 
-              onScan={handleQrScan}
-              onError={handleQrError}
-              onClose={() => setShowQrScanner(false)}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* QR Scanner removed */}
       
       <style jsx global>{`
         @keyframes glowEffect {
